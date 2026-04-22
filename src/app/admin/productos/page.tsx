@@ -245,6 +245,21 @@ export default function ProductosPage() {
     setShowModal(true);
   };
 
+  const handleDelete = async (productId: string, productName: string) => {
+    if (!confirm(`¿Estás seguro de eliminar "${productName}"? Esta acción no se puede deshacer.`)) return;
+    
+    try {
+      // Delete price_tiers first (FK dependency)
+      await supabase.from('price_tiers').delete().eq('product_id', productId);
+      // Delete the product
+      const { error } = await supabase.from('products').delete().eq('id', productId);
+      if (error) throw error;
+      fetchProducts();
+    } catch (err: any) {
+      alert('Error al eliminar: ' + err.message);
+    }
+  };
+
   const resetForm = () => {
     setEditingId(null);
     setName('');
@@ -435,7 +450,7 @@ export default function ProductosPage() {
                           <button onClick={() => handleEdit(p)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95">
                             <Edit2 className="w-5 h-5" />
                           </button>
-                          <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-red-500 hover:border-red-200 transition-all shadow-sm active:scale-95">
+                          <button onClick={() => handleDelete(p.id, p.name)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-red-500 hover:border-red-200 transition-all shadow-sm active:scale-95">
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
@@ -488,6 +503,7 @@ export default function ProductosPage() {
                             <span>Editar</span>
                         </button>
                         <button 
+                            onClick={() => handleDelete(p.id, p.name)}
                             className="flex-1 py-3 bg-white border border-slate-200 text-red-500 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center space-x-2 shadow-sm active:scale-95 transition-all"
                         >
                             <Trash2 className="w-4 h-4" />
